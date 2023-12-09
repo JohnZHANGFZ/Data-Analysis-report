@@ -1,0 +1,144 @@
+---
+title: "STA302 Final project#1"
+author: "Yuxuan Wei, Fangzheng Zhang"
+date: '2023-10-11'
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# import packages
+library(readr)
+library(tidyverse)
+library(pander)
+```
+
+```{r}
+# import from csv file
+data <- read.csv(file="house_price.csv", header=T, fileEncoding = 'GB2312')
+
+# check missing values
+colSums(is.na(data))
+
+# pick variables
+# delete any rows with buildingType value smaller than 1
+# delete any rows with price value below 1000
+data1 <- subset(data, buildingType >= 1)
+data2 <- subset(data1, price >= 1000)
+
+# create a subset that only contains predictors we need
+new <- subset(data2, select = c(price, square, livingRoom,
+                               drawingRoom, bathRoom, buildingType, 
+                               constructionTime, ladderRatio, communityAverage))
+
+# remove missing values
+new <- new[complete.cases(new),]
+
+```
+
+```{r}
+# check data type
+str(new)
+
+# change data type
+new$livingRoom <- as.integer(new$livingRoom)
+new$drawingRoom <- as.integer(new$drawingRoom)
+new$bathRoom <- as.integer(new$bathRoom)
+sapply(new, class)
+```
+
+```{r}
+# covert numerical variable to categorical
+newType <- cut(new$buildingType, breaks = c(0, 1, 2, 3, 4), 
+               labels = c("tower", "bungalow", "combination of plate&tower", "plate"))
+table(newType)
+
+new$buildingType = as.factor(new$buildingType)
+str(new)
+# save the cleaned dataset in a new file
+write_csv(new, "personal_selected_house_price.csv") 
+```
+
+```{r}
+# summary table of the data
+knitr::kable(summary(new),caption = "Summary Table")
+```
+
+# codes above are used for cleanning datas, which involves deleting NV values, 
+outliers, converting data types, selecting predictors and so on. Since at the
+end we saved the cleaned data into a new file and we will use this file to fit
+our model, codes above should not be ran if the cleaned dataset file is exist.
+
+```{r}
+data = read_csv("personal_selected_house_price.csv")
+livingroom = table(data$livingRoom)
+drawingroom = table(data$drawingRoom)
+constructintime = table(data$constructionTime)
+barplot(livingroom, main="Histogram of Living Room", xlab="Number of Living Rooms", ylab="Frequency", col="lightblue", border="black")
+barplot(drawingroom, main="Histogram of Drawing Room", xlab="Number of Drawing Rooms", ylab="Frequency", col="lightblue", border="black")
+```
+
+
+
+
+```{r}
+# used to check the completeness of our dataset
+
+# reload the cleaned data
+data <- read_csv("modified_house_price.csv")
+
+# check if NA exists
+has_na <- any(is.na(data))
+
+if(has_na) {
+  cat("The modified dataset still contains missing values.")
+} else {
+  cat("The modified dataset does not contain any missing values.")
+}
+
+```
+
+```{r}
+# load data
+data <- read.csv("modified_house_price.csv")
+
+# fit model
+model <- lm(price ~ square + livingRoom + drawingRoom + bathRoom + 
+              as.factor(buildingType), data = data)
+
+# check model summary
+summary(model)
+```
+
+```{r}
+# get residuals and fitted values
+residuals <- resid(model)
+fitted.values <- fitted(model)
+
+# create a frame to draw graphs
+plot_data <- data.frame(fitted.values, residuals)
+
+# 1. residual plot
+library(ggplot2)
+ggplot(plot_data, aes(x=fitted.values, y=residuals)) + 
+  geom_point(alpha=0.5) + 
+  geom_hline(yintercept=0, color="red") + 
+  theme_minimal() +
+  ggtitle("Residuals vs Fitted Values")
+
+# 2. QQ plot
+ggplot(plot_data, aes(sample=residuals)) +
+  stat_qq() +
+  ggtitle("QQ Plot of Residuals")
+
+# 4. scatter plot and regression line
+ggplot(data, aes(x=square, y=price)) +
+  geom_point(alpha=0.5) +
+  geom_smooth(method=lm, color="red") +
+  theme_minimal() +
+  ggtitle("Price vs Square")
+```
+
