@@ -1,3 +1,8 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -5,130 +10,95 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 # import packages
+# install.packages("pbkrtest")
+# install.packages("car")
+# install.packages("readr")
+# install.packages("tidyverse")
+# install.packages("pander")
+# install.packages("ggplot2")
+# install.packages("MASS")
 library(readr)
 library(tidyverse)
 library(pander)
 library(ggplot2)
-```
-
-```{r}
-# import from csv file
-data <- read.csv(file="house_price.csv", header=T, fileEncoding = 'GB2312')
-
-# check missing values
-colSums(is.na(data))
-
-# pick variables
-# delete any rows with buildingType value smaller than 1
-# delete any rows with price value below 1000
-data1 <- subset(data, buildingType >= 1)
-data2 <- subset(data1, price >= 1000)
-
-# According to 10/13/2023’s exchange rate of 1:5.34,
-# convert from RMB to Canadian dollars
-data2$price = data2$price/5.34
-
-# create a subset that only contains predictors we need
-new <- subset(data2, select = c(price, square, livingRoom,
-                               drawingRoom, kitchen, bathRoom, 
-                               communityAverage, followers, 
-                               renovationCondition, buildingType))
-
-# remove missing values
-new <- new[complete.cases(new),]
-
-```
-
-```{r}
-# check data type
-str(new)
-
-# change data type
-new$livingRoom <- as.integer(new$livingRoom)
-new$drawingRoom <- as.integer(new$drawingRoom)
-new$bathRoom <- as.integer(new$bathRoom)
-sapply(new, class)
-```
-
-```{r}
-# covert numerical variable to categorical
-newType <- cut(new$buildingType, breaks = c(0, 1, 2, 3, 4), 
-               labels = c("tower", "bungalow", "combination of plate&tower", "plate"))
-table(newType)
-
-new$buildingType = as.factor(new$buildingType)
-str(new)
-# save the cleaned dataset in a new file
-write_csv(new, "modified_house_price.csv")
-```
-
-```{r}
-# numerical summaries
-var(new$price)
-var(new$square)
-var(new$livingRoom)
-var(new$drawingRoom)
-var(new$bathRoom)
-# summary table of the data
-knitr::kable(summary(new),caption = "Summary Table")
-```
-
-# codes above are used for cleanning datas, which involves deleting NV values, 
-outliers, converting data types, selecting predictors and so on. Since at the
-end we saved the cleaned data into a new file and we will use this file to fit
-our model, codes above should not be ran if the cleaned dataset file is exist.
-
-```{r}
-# used to check the completeness of our dataset
-
-# reload the cleaned data
-data <- read_csv("modified_house_price.csv")
-
-# check if NA exists
-has_na <- any(is.na(data))
-
-if(has_na) {
-  cat("The modified dataset still contains missing values.")
-} else {
-  cat("The modified dataset does not contain any missing values.")
-}
-
-```
-
-```{r}
-# import packages
-library(tidyverse)
 library(car)
 library(MASS)
+library(gridExtra)
+```
 
+# Step 0: Divide data into training and testing
+```{r}
 # import data
 house_price <- read.csv("modified_house_price.csv")
 
-# Step 0: Divide data into training and testing
 set.seed(123) # set seed for reproducibility
 n <- nrow(house_price)
 training_indices <- sample(1:n, size = round(0.8 * n))
 train <- house_price[training_indices, ]
 test <- house_price[-training_indices, ]
+```
 
-# Exploratory Data Analysis (EDA)
-# Graphical Summaries
-# draw boxplots for each variable
-boxplot(train$followers, main = "Followers")
-boxplot(train$square, main = "Square")
-# more boxplots...
+## Exploratory Data Analysis (EDA)
+## Graphical Summaries
+## draw boxplots for each variable
+```{r}
+#new <- subset(data2, select = c(price, square, livingRoom,
+#                               drawingRoom, kitchen, bathRoom, 
+#                               communityAverage, followers, 
+#                               renovationCondition, buildingType))
 
+box_Followers <- ggplot(train, aes(x = "", y = followers)) + 
+  geom_boxplot() + ggtitle("Followers")
+box_Square <- ggplot(train, aes(x = "", y = square)) + 
+  geom_boxplot() + ggtitle("Square")
+box_LivingRoom <- ggplot(train, aes(x = "", y = livingRoom)) + 
+  geom_boxplot() + ggtitle("Living Room")
+box_DrawingRoom <- ggplot(train, aes(x = "", y = drawingRoom)) + 
+  geom_boxplot() + ggtitle("Drawing Room")
+box_Kitchen <- ggplot(train, aes(x = "", y = kitchen)) + 
+  geom_boxplot() + ggtitle("Kitchen")
+box_BathRoom <- ggplot(train, aes(x = "", y = bathRoom)) +
+  geom_boxplot() + ggtitle("Bath Room")
+box_CommunityAverage <- ggplot(train, aes(x = "", y = communityAverage)) +
+  geom_boxplot() + ggtitle("Community Average")
+box_RenovationCondition <- ggplot(train, aes(x = "", y = renovationCondition)) +
+  geom_boxplot() + ggtitle("Renovation Condition")
+
+grid.arrange(box_Followers, box_Square, box_LivingRoom, 
+             box_DrawingRoom, box_Kitchen, box_BathRoom, 
+             box_CommunityAverage, box_RenovationCondition,nrow=2)
+```
+
+```{r}
+bar_BuildingType <- train %>% 
+  ggplot(aes(x=buildingType)) +
+  geom_bar(color='black', fill='steelblue') +
+  labs(title="Building Type") + 
+  coord_flip()
+
+bar
+```
+
+```{r}
 # Step 1: Choose a starting model
-model_full <- lm(price ~ followers + square + livingRoom + drawingRoom + kitchen + bathRoom + buildingType + communityAverage + renovationCondition, data = train)
+model_full <- lm(price ~ followers + square + livingRoom + drawingRoom + 
+                   kitchen + bathRoom + buildingType + communityAverage + 
+                   renovationCondition, data = train)
+```
 
+```{r}
 # Step 2: Explore model transformations
 # check the normality of the residuals
 par(mfrow = c(2, 2))
 plot(model_full)
+```
 
+```{r}
 # Step 3: Check for multicollinearity
 vif(model_full)
+```
 
+```{r}
 # Step 4: Automated selection vs. manual selection
 model_auto <- step(model_full, direction = "both")
 model_manual <- lm(price ~ followers + square, data = train)
@@ -136,7 +106,9 @@ model_manual <- lm(price ~ followers + square, data = train)
 # compare the two models
 anova(model_auto, model_full)
 anova(model_manual, model_full)
+```
 
+```{r}
 # Step 5: Leverage, Outlier, and Influential Point Analysis
 # use hatvalues(), cooks.distance(), rstandard() to check
 
@@ -145,6 +117,4 @@ par(mfrow = c(1, 1))
 plot(model_auto$residuals ~ model_auto$fitted.values)
 
 # Model Validation on Test Data
-
-
 ```
