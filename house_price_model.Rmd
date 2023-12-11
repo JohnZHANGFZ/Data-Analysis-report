@@ -1,12 +1,4 @@
 
-
----
-title: "STA302 Final project#1"
-author: "Yuxuan Wei, Fangzheng Zhang, Yunyao Zhang, Yiru Yang"
-date: '2023-10-11'
-output: pdf_document
----
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -38,7 +30,9 @@ data2$price = data2$price/5.34
 
 # create a subset that only contains predictors we need
 new <- subset(data2, select = c(price, square, livingRoom,
-                               drawingRoom, kitchen, bathRoom, buildingType))
+                               drawingRoom, kitchen, bathRoom, 
+                               communityAverage, followers, 
+                               renovationCondition, buildingType))
 
 # remove missing values
 new <- new[complete.cases(new),]
@@ -65,7 +59,7 @@ table(newType)
 new$buildingType = as.factor(new$buildingType)
 str(new)
 # save the cleaned dataset in a new file
-write_csv(new, "modified_house_price.csv") 
+write_csv(new, "modified_house_price.csv")
 ```
 
 ```{r}
@@ -102,43 +96,55 @@ if(has_na) {
 ```
 
 ```{r}
-# load data
-data <- read.csv("modified_house_price.csv")
+# import packages
+library(tidyverse)
+library(car)
+library(MASS)
 
-# fit model
-model <- lm(price ~ square + livingRoom + drawingRoom + bathRoom + 
-              as.factor(buildingType), data = data)
+# import data
+house_price <- read.csv("modified_house_price.csv")
 
-# check model summary
-summary(model)
+# Step 0: Divide data into training and testing
+set.seed(123) # set seed for reproducibility
+n <- nrow(house_price)
+training_indices <- sample(1:n, size = round(0.8 * n))
+train <- house_price[training_indices, ]
+test <- house_price[-training_indices, ]
+
+# Exploratory Data Analysis (EDA)
+# Graphical Summaries
+# draw boxplots for each variable
+boxplot(train$followers, main = "Followers")
+boxplot(train$square, main = "Square")
+# more boxplots...
+
+# Step 1: Choose a starting model
+model_full <- lm(price ~ followers + square + livingRoom + drawingRoom + kitchen + bathRoom + buildingType + communityAverage + renovationCondition, data = train)
+
+# Step 2: Explore model transformations
+# check the normality of the residuals
+par(mfrow = c(2, 2))
+plot(model_full)
+
+# Step 3: Check for multicollinearity
+vif(model_full)
+
+# Step 4: Automated selection vs. manual selection
+model_auto <- step(model_full, direction = "both")
+model_manual <- lm(price ~ followers + square, data = train)
+
+# compare the two models
+anova(model_auto, model_full)
+anova(model_manual, model_full)
+
+# Step 5: Leverage, Outlier, and Influential Point Analysis
+# use hatvalues(), cooks.distance(), rstandard() to check
+
+# compare the two models
+par(mfrow = c(1, 1))
+plot(model_auto$residuals ~ model_auto$fitted.values)
+
+# Model Validation on Test Data
+
+
 ```
-
-```{r}
-# get residuals and fitted values
-residuals <- resid(model)
-fitted.values <- fitted(model)
-
-# create a frame to draw graphs
-plot_data <- data.frame(fitted.values, residuals)
-
-# 1. residual plot
-library(ggplot2)
-ggplot(plot_data, aes(x=fitted.values, y=residuals)) + 
-  geom_point(alpha=0.5) + 
-  geom_hline(yintercept=0, color="#c85050") + 
-  theme_minimal() +
-  ggtitle("Residuals vs Fitted Values")
-
-# 2. QQ plot
-ggplot(plot_data, aes(sample=residuals)) +
-  stat_qq() +
-  ggtitle("QQ Plot of Residuals")
-
-# 3. scatter plot and regression line
-ggplot(data, aes(x=square, y=price)) +
-  geom_point(alpha=0.5) +
-  geom_smooth(method=lm, color="red") +
-  theme_minimal() +
-  ggtitle("Price vs Square")
-```
-
