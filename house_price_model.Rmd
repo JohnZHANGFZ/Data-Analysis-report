@@ -64,6 +64,7 @@ box_CommunityAverage <- ggplot(train, aes(x = "", y = communityAverage)) +
 box_RenovationCondition <- ggplot(train, aes(x = "", y = renovationCondition)) +
   geom_boxplot() + ggtitle("Renovation Condition")
 
+
 grid.arrange(box_Followers, box_Square, box_LivingRoom, 
              box_DrawingRoom, box_Kitchen, box_BathRoom, 
              box_CommunityAverage, box_RenovationCondition,nrow=2)
@@ -76,30 +77,45 @@ bar_BuildingType <- train %>%
   labs(title="Building Type") + 
   coord_flip()
 
-bar
+bar_BuildingType <- train %>% 
+  ggplot(aes(x=buildingType)) +
+  geom_bar(color='black', fill='steelblue') +
+  labs(title="Building Type") + 
+  coord_flip()
+bar_BuildingType
 ```
 
-```{r}
 # Step 1: Choose a starting model
+```{r}
 model_full <- lm(price ~ followers + square + livingRoom + drawingRoom + 
                    kitchen + bathRoom + buildingType + communityAverage + 
                    renovationCondition, data = train)
 ```
 
-```{r}
 # Step 2: Explore model transformations
 # check the normality of the residuals
+```{r}
 par(mfrow = c(2, 2))
 plot(model_full)
+
+train <- train %>% mutate(followers = followers+1)
+
+summary(powerTransform(cbind(train$followers,
+train$square,
+train$livingRoom,
+train$drawingRoom,
+train$kitchen,
+train$bathRoom,
+train$communityAverage)))
 ```
 
-```{r}
 # Step 3: Check for multicollinearity
+```{r}
 vif(model_full)
 ```
 
-```{r}
 # Step 4: Automated selection vs. manual selection
+```{r}
 model_auto <- step(model_full, direction = "both")
 model_manual <- lm(price ~ followers + square, data = train)
 
@@ -108,8 +124,8 @@ anova(model_auto, model_full)
 anova(model_manual, model_full)
 ```
 
-```{r}
 # Step 5: Leverage, Outlier, and Influential Point Analysis
+```{r}
 # use hatvalues(), cooks.distance(), rstandard() to check
 
 # compare the two models
