@@ -1,3 +1,5 @@
+
+
 ---
 title: "STA302 Final project#1"
 author: "Yuxuan Wei, Fangzheng Zhang, Yunyao Zhang, Yiru Yang"
@@ -36,7 +38,7 @@ data2$price = data2$price/5.34
 
 # create a subset that only contains predictors we need
 new <- subset(data2, select = c(price, square, livingRoom,
-                               drawingRoom, bathRoom, buildingType))
+                               drawingRoom, kitchen, bathRoom, buildingType))
 
 # remove missing values
 new <- new[complete.cases(new),]
@@ -123,7 +125,7 @@ plot_data <- data.frame(fitted.values, residuals)
 library(ggplot2)
 ggplot(plot_data, aes(x=fitted.values, y=residuals)) + 
   geom_point(alpha=0.5) + 
-  geom_hline(yintercept=0, color="red") + 
+  geom_hline(yintercept=0, color="#c85050") + 
   theme_minimal() +
   ggtitle("Residuals vs Fitted Values")
 
