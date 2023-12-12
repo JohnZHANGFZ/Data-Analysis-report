@@ -165,8 +165,27 @@ summary(manually_reduced_model)
 ## compare the two models
 ```{r}
 anova(auto_reduced_model, transformed_model_full)
+```
+
+```{r}
 anova(manually_reduced_model, transformed_model_full)
 ```
+
+## adj R^2
+```{r}
+
+```
+
+## AIC
+```{r}
+
+```
+
+## BIC
+```{r}
+
+```
+
 
 # Step 5: Leverage, Outlier, and Influential Point Analysis
 ```{r}
