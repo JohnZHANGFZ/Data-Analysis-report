@@ -173,17 +173,23 @@ anova(manually_reduced_model, transformed_model_full)
 
 ## adj R^2
 ```{r}
-
+summary(transformed_model_full)$adj.r.squared
+summary(auto_reduced_model)$adj.r.squared
+summary(manually_reduced_model)$adj.r.squared
 ```
 
 ## AIC
 ```{r}
-
+AIC(transformed_model_full)
+AIC(auto_reduced_model)
+AIC(manually_reduced_model)
 ```
 
 ## BIC
 ```{r}
-
+BIC(transformed_model_full)
+BIC(auto_reduced_model)
+BIC(manually_reduced_model)
 ```
 
 
