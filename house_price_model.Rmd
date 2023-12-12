@@ -123,6 +123,7 @@ transformed_train <- train %>% mutate(transformed_price = price^(0.18),
                                       transformed_kitchen = kitchen^(1.97),
                                       transformed_bathRoom = bathRoom^(-1.2),
                                       transformed_communityAverage = communityAverage^(-0.33))
+
 transformed_model_full <- lm(transformed_price ~ . -followers -square 
                              -livingRoom -drawingRoom -kitchen -bathRoom 
                              -bathRoom -communityAverage, data = transformed_train)
