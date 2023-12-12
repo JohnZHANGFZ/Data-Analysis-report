@@ -98,20 +98,40 @@ model_full <- lm(price ~ followers + square + livingRoom + drawingRoom +
 par(mfrow = c(2, 2))
 plot(model_full)
 
-train <- train %>% mutate(followers = followers+1)
+train <- train %>% mutate(followers = followers + 1)
+train <- train %>% mutate(livingRoom = livingRoom + 1)
+train <- train %>% mutate(drawingRoom = drawingRoom + 1)
+train <- train %>% mutate(kitchen = kitchen + 1)
+train <- train %>% mutate(bathRoom = bathRoom + 1)
 
-summary(powerTransform(cbind(train$followers,
-train$square,
-train$livingRoom,
-train$drawingRoom,
-train$kitchen,
-train$bathRoom,
-train$communityAverage)))
+summary(powerTransform(cbind(train$price,
+                             train$followers,
+                             train$square,
+                             train$livingRoom,
+                             train$drawingRoom,
+                             train$kitchen,
+                             train$bathRoom,
+                             train$communityAverage)))
 ```
+
+```{r}
+transformed_train <- train %>% mutate(transformed_price = price^(0.18),
+                                      transformed_followers = followers^(-0.11),
+                                      transformed_square = square^(0.07),
+                                      transformed_livingRoom = livingRoom^(0.46),
+                                      transformed_drawingRoom = drawingRoom^(0.93),
+                                      transformed_kitchen = kitchen^(1.97),
+                                      transformed_bathRoom = bathRoom^(-1.2),
+                                      transformed_communityAverage = communityAverage^(-0.33))
+transformed_model_full <- lm(transformed_price ~ . -followers -square 
+                             -livingRoom -drawingRoom -kitchen -bathRoom 
+                             -bathRoom -communityAverage, data = transformed_train)
+```
+
 
 # Step 3: Check for multicollinearity
 ```{r}
-vif(model_full)
+vif(transformed_model_full)
 ```
 
 # Step 4: Automated selection vs. manual selection
