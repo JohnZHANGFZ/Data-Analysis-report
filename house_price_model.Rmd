@@ -133,13 +133,32 @@ transformed_model_full <- lm(transformed_price ~ . -followers -square
 # Step 3: Check for multicollinearity
 ```{r}
 vif(transformed_model_full)
+# The highest VIF value is for transformed_square (3.511364), 
+# but this value is significantly lower than the usual thresholds (5 or 10) 
+# used to indicate serious multicollinearity issues.
+
+# The VIF values for other variables are even lower, 
+# suggesting that there is not strong linear correlation among them.
+
+# No Need to Remove Any Variables: Based on the current VIF results, 
+# there's no need to remove any predictors from our model, 
+# as none of the variables have VIFs close to or exceeding 5.
 ```
 
 # Step 4: Automated selection vs. manual selection
+## Candidate model 1: automated selection
 ```{r}
-model_auto <- step(model_full, direction = "both")
-model_manual <- lm(price ~ followers + square, data = train)
+model_auto <- step(transformed_model_full, direction = "both")
+summary(model_auto)
+```
 
+## Candidate model 2: manually selection
+```{r}
+model_manual <- lm(price ~ followers + square, data = train)
+summary(model_manual)
+```
+
+```{r}
 # compare the two models
 anova(model_auto, model_full)
 anova(model_manual, model_full)
