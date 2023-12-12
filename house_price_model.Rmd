@@ -148,20 +148,24 @@ vif(transformed_model_full)
 # Step 4: Automated selection vs. manual selection
 ## Candidate model 1: automated selection
 ```{r}
-model_auto <- step(transformed_model_full, direction = "both")
-summary(model_auto)
+auto_reduced_model <- step(transformed_model_full, direction = "both")
+summary(auto_reduced_model)
 ```
 
 ## Candidate model 2: manually selection
 ```{r}
-model_manual <- lm(price ~ followers + square, data = train)
-summary(model_manual)
+# Manually remove the predictors with high p-values
+summary(transformed_model_full)
 ```
-
+The predictor transformed_drawingRoom has a high p-value (0.81302), well above the 0.05 threshold. This suggests that it might not be significantly contributing to the model, thus I decide removing it.
 ```{r}
-# compare the two models
-anova(model_auto, model_full)
-anova(model_manual, model_full)
+manually_reduced_model <- update(transformed_model_full, . ~ . - transformed_drawingRoom)
+summary(manually_reduced_model)
+```
+## compare the two models
+```{r}
+anova(auto_reduced_model, transformed_model_full)
+anova(manually_reduced_model, transformed_model_full)
 ```
 
 # Step 5: Leverage, Outlier, and Influential Point Analysis
